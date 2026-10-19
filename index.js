@@ -11,7 +11,7 @@ scene.background = new THREE.Color(0xEEEEEE);
 const camera = new THREE.PerspectiveCamera(
   45, window.innerWidth / window.innerHeight, 0.1, 1000
 );
-camera.position.set(-35, 40, 60);
+camera.position.set(-25, 30, 50);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -51,10 +51,10 @@ document.body.appendChild(guiContainer);
 // Load models
 const models = [
   { path: reponame + '/models/Cat.glb', position: [0, 0, 0], scale: 30, visible: true },
-  { group: 'food', path: reponame + '/models/Watermelon.glb', position: [0, 2, 9], rotation: [0, Math.PI/2 - Math.PI/9, 0], scale: 7, selected: true },
+  { group: 'food', path: reponame + '/models/Watermelon.glb', position: [0, 2, 9], rotation: [0, Math.PI/2 - Math.PI/9, 0], scale: 7, visible: true },
   { group: 'hat', path: reponame + '/models/Duck.glb', position: [0.5, 10.25, 6], scale: 1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#fff133'},
   { group: 'food', path: reponame + '/models/Juice.glb', position: [0, 2, 8.5], rotation: [0, Math.PI * 1.3, 0], scale: 2 },
-  { group: 'hat', path: reponame + '/models/Propeller Hat.glb', position: [0.5, 9.5, 6], scale: 1.7, rotation: [0, -Math.PI/7, 0], selected: true },
+  { group: 'hat', path: reponame + '/models/Propeller Hat.glb', position: [0.5, 9.5, 6], scale: 1.7, rotation: [0, -Math.PI/7, 0], visible: true },
   { group: 'hat', path: reponame + '/models/Monocle.glb', position: [0.1, 0.1, 6.4], scale: 0.8, rotation: [0, -Math.PI/7, 0] },
   { path: reponame + '/models/Glasses.glb', position: [-0.75, 8.4, 7.95], scale: 4.1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#4e475e', visible: true },
 ];
