@@ -50,7 +50,7 @@ document.body.appendChild(guiContainer);
 
 // Load models
 const models = [
-  { path: '/models/Cat.glb', position: [0, 0, 0], scale: 30, visible: true },
+  { path: reponame + '/models/Cat.glb', position: [0, 0, 0], scale: 30, visible: true },
   { group: 'food', path: reponame + '/models/Watermelon.glb', position: [0, 2, 9], rotation: [0, Math.PI/2 - Math.PI/9, 0], scale: 7 },
   { group: 'hat', path: reponame + '/models/Duck.glb', position: [0.5, 10.25, 6], scale: 1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#fff133'},
   { group: 'food', path: reponame + '/models/Juice.glb', position: [0, 2, 8.5], rotation: [0, Math.PI * 1.3, 0], scale: 2 },
