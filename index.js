@@ -26,7 +26,7 @@ camControls.dampingFactor = 0.2;
 camControls.target.set(5, 5, 5);
 
 // Axes
-scene.add(new THREE.AxesHelper(20));
+//scene.add(new THREE.AxesHelper(20));
 
 // Lighting
 scene.add(new THREE.AmbientLight(0xffffff, 2));
