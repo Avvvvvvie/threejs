@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.20.0/+esm';
 
-const reponame = '/threejs'
+const reponame = ''
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xEEEEEE);
@@ -29,17 +29,17 @@ camControls.target.set(5, 5, 5);
 //scene.add(new THREE.AxesHelper(20));
 
 // Lighting
-scene.add(new THREE.AmbientLight(0xffffff, 2));
+scene.add(new THREE.AmbientLight(0xffead2, 2.5));
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+const directionalLight = new THREE.DirectionalLight(0xffd2a1, 3.5);
 directionalLight.position.set(5, 10, 7);
 scene.add(directionalLight);
 
-const spotLight = new THREE.SpotLight(0xdddddd);
+const spotLight = new THREE.SpotLight(0xffc987, 1);
 spotLight.position.set(-70, 90, 35);
 scene.add(spotLight);
 
-const headLight = new THREE.PointLight(0x777777, 1);
+const headLight = new THREE.PointLight(0xffdfb5, 1);
 scene.add(headLight);
 
 const gui = new GUI();
@@ -51,12 +51,31 @@ document.body.appendChild(guiContainer);
 // Load models
 const models = [
   { path: reponame + '/models/Cat.glb', position: [0, 0, 0], scale: 30, visible: true },
+
   { group: 'food', path: reponame + '/models/Watermelon.glb', position: [0, 2, 9], rotation: [0, Math.PI/2 - Math.PI/9, 0], scale: 7, visible: true },
-  { group: 'hat', path: reponame + '/models/Duck.glb', position: [0.5, 10.25, 6], scale: 1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#fff133'},
   { group: 'food', path: reponame + '/models/Juice.glb', position: [0, 2, 8.5], rotation: [0, Math.PI * 1.3, 0], scale: 2 },
+  { group: 'food', path: reponame + '/models/Water.glb', position: [0, -0.3, 8.5], rotation: [0, Math.PI * -0.1, 0], scale: 5 },
+  { group: 'food', path: reponame + '/models/Money.glb', position: [0, -0.2, 9], rotation: [0, 0, 0], scale: 0.3 },
+  { group: 'food', path: reponame + '/models/Orange.glb', position: [0, 2, 9], rotation: [0, 0, 0], scale: 0.05 },
+  
+  { group: 'face', path: reponame + '/models/Glasses.glb', position: [-0.75, 8.4, 7.95], scale: 4.1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#4e475e' },
+  { group: 'face', path: reponame + '/models/Monocle.glb', position: [0.1, 0.1, 6.4], scale: 0.8, rotation: [0, -Math.PI/7, 0] },
+  { group: 'face', path: reponame + '/models/Bowtie.glb', position: [0, 5, 5.9], rotation: [0, -Math.PI * 0.09, 0], scale: 0.008 },
+  { group: 'face', path: reponame + '/models/Thug Life.glb', position: [0, 0, 5.9], rotation: [0, Math.PI * 0.4, 0], scale: [1, 0.8, 1] },
+  
   { group: 'hat', path: reponame + '/models/Propeller Hat.glb', position: [0.5, 9.5, 6], scale: 1.7, rotation: [0, -Math.PI/7, 0], visible: true },
-  { group: 'hat', path: reponame + '/models/Monocle.glb', position: [0.1, 0.1, 6.4], scale: 0.8, rotation: [0, -Math.PI/7, 0] },
-  { path: reponame + '/models/Glasses.glb', position: [-0.75, 8.4, 7.95], scale: 4.1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#4e475e', visible: true },
+  { group: 'hat', path: reponame + '/models/Hat.glb', position: [0.5, 8.8, 5.7], scale: 1.9, rotation: [-Math.PI * 0.05, -Math.PI/7, -Math.PI * 0.05], colorable: true, color: '#695732' },
+  { group: 'hat', path: reponame + '/models/Duck.glb', position: [0.5, 10.25, 6], scale: 1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#fff133'},
+  { group: 'hat', path: reponame + '/models/Frog.glb', position: [0.5, 10.7, 6], scale: 0.2, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#33ff4e'},
+  { group: 'hat', path: reponame + '/models/Witch Hat.glb', position: [0.5, 14.5, 6], scale: 10, rotation: [0, Math.PI*0.3, 0] },
+
+  { group: 'scene', path: reponame + '/models/Bed.glb', position: [0, -5.5, 1], rotation: [0, 0, 0], scale: 10 },
+  { group: 'scene', path: reponame + '/models/Classroom.glb', position: [8, -33.5, -5], rotation: [0, -Math.PI*0.1, 0], scale: 10 },
+  { group: 'scene', path: reponame + '/models/Tea Room.glb', position: [8, -16.2, -5], rotation: [0, -Math.PI*0.4, 0], scale: 0.5 },
+  
+  { group: 'food', path: reponame + '/models/Maxwell.glb', position: [0, 0, 9], rotation: [0, -Math.PI*0.2, 0], scale: 10 },
+  
+  { path: reponame + '/models/Sword.glb', position: [-11, 2, 11.2], rotation: [-Math.PI * 0.2, Math.PI * 0.9, Math.PI * 0.4], scale: 10 },
 ];
 
 const loadedObjects = new Map();
