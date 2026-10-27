@@ -242,19 +242,19 @@ function updateMeowParticles(deltaTime) {
 }
 
 const meowFiles = [
-  '/sounds/meow3.mp3',
-  '/sounds/meow2.mp3',
-  '/sounds/meow4.mp3',
-  '/sounds/meow5.mp3',
-  '/sounds/meow6.mp3',
-  '/sounds/meow7.mp3',
-  '/sounds/meow8.mp3',
-  '/sounds/meow2.mp3',
-  '/sounds/meow4.mp3',
-  '/sounds/meow5.mp3',
-  '/sounds/meow6.mp3',
-  '/sounds/meow7.mp3',
-  '/sounds/meow8.mp3',
+  reponame + '/sounds/meow3.mp3',
+  reponame + '/sounds/meow2.mp3',
+  reponame + '/sounds/meow4.mp3',
+  reponame + '/sounds/meow5.mp3',
+  reponame + '/sounds/meow6.mp3',
+  reponame + '/sounds/meow7.mp3',
+  reponame + '/sounds/meow8.mp3',
+  reponame + '/sounds/meow2.mp3',
+  reponame + '/sounds/meow4.mp3',
+  reponame + '/sounds/meow5.mp3',
+  reponame + '/sounds/meow6.mp3',
+  reponame + '/sounds/meow7.mp3',
+  reponame + '/sounds/meow8.mp3',
 ];
 
 async function playMeows(count) {
