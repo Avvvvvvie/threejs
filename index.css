@@ -20,6 +20,48 @@ body {
     height: 100%;
 }
 
+.disapproval-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 0 16px;
+    color: #d00000;
+    font-family: 'Cormorant SC', serif;
+    font-size: clamp(2.5rem, 13vw, 12rem);
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    text-align: center;
+    pointer-events: none;
+    animation: disapproval 3s ease-in-out forwards;
+}
+
+@keyframes disapproval {
+    0% {
+        opacity: 0;
+        transform: scaleX(0.64) scaleY(0.94);
+    }
+
+    15% {
+        opacity: 1;
+        transform: scaleX(0.72) scaleY(1.04);
+    }
+
+    72% {
+        opacity: 1;
+        transform: scaleX(0.72) scaleY(1.04);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scaleX(0.72) scaleY(1.04);
+    }
+}
+
 .lil-gui {
     display: none !important;
 }

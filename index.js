@@ -91,7 +91,7 @@ confirmButton.classList.add('cursive')
 
 // Load models
 const models = [
-  { path: reponame + '/models/Cat.glb', position: [0, 0, 0], scale: 30, visible: true },
+  { path: reponame + '/models/Cat.glb', position: [0, 0, 0], scale: 30, visible: true, price: 666 },
 
   { group: 'food', path: reponame + '/models/Watermelon.glb', position: [0, 2, 9], rotation: [0, Math.PI/2 - Math.PI/9, 0], scale: 7, visible: true, price: 4 },
   { group: 'food', path: reponame + '/models/Juice.glb', position: [0, 2, 8.5], rotation: [0, Math.PI * 1.3, 0], scale: 2, price: 2 },
@@ -99,7 +99,7 @@ const models = [
   { group: 'food', path: reponame + '/models/Money.glb', position: [0, -0.2, 9], rotation: [0, 0, 0], scale: 0.3, price: 3 },
   { group: 'food', path: reponame + '/models/Orange.glb', position: [0, 2, 9], rotation: [0, 0, 0], scale: 0.05, price: 2 },
   
-  { group: 'face', path: reponame + '/models/Glasses.glb', position: [-0.75, 8.4, 7.95], scale: 4.1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#4e475e', price: 1 },
+  { group: 'face', path: reponame + '/models/Glasses.glb', position: [-0.75, 8.4, 7.95], scale: 4.1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#4e475e', price: -1 },
   { group: 'face', path: reponame + '/models/Monocle.glb', position: [0.1, 0.1, 6.4], scale: 0.8, rotation: [0, -Math.PI/7, 0], price: 4 },
   { group: 'face', path: reponame + '/models/Bowtie.glb', position: [0, 5, 5.9], rotation: [0, -Math.PI * 0.09, 0], scale: 0.008, price: 2 },
   { group: 'face', path: reponame + '/models/Thug Life.glb', position: [0, 0, 5.9], rotation: [0, Math.PI * 0.4, 0], scale: [1, 0.8, 1], price: 3 },
@@ -120,7 +120,7 @@ const models = [
 ];
 
 function getCost() {
-  return models.reduce(
+  return - 666 + models.reduce(
     (sum, item) => sum + (item.visible === true ? item.price ?? 0 : 0),
     0
   )
@@ -241,12 +241,6 @@ function updateMeowParticles(deltaTime) {
   }
 }
 
-function execute() {
-  let cost = getCost()
-  spawnMeowParticles(cost);
-  playMeows(cost)
-}
-
 const meowFiles = [
   '/sounds/meow3.mp3',
   '/sounds/meow2.mp3',
@@ -290,6 +284,36 @@ async function playMeows(count) {
 
       audio.play().catch(reject);
     });
+  }
+}
+
+let disapprovalOverlay;
+
+function disapprove() {
+  disapprovalOverlay?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'disapproval-overlay';
+  overlay.setAttribute('role', 'alert');
+  overlay.textContent = 'disapproved';
+  window.setTimeout(() => {
+    if (disapprovalOverlay === overlay) {
+      disapprovalOverlay = null;
+    }
+    overlay.remove();
+  }, 3000);
+
+  disapprovalOverlay = overlay;
+  document.body.appendChild(overlay);
+}
+
+function execute() {
+  let cost = getCost()
+  if(cost > 0) {
+      spawnMeowParticles(cost);
+      playMeows(cost)
+  } else {
+      disapprove()
   }
 }
 
