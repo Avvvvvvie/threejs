@@ -14,10 +14,11 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.set(-25, 30, 50);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
+const container = document.getElementById('webgl-container');
+renderer.setSize(container.clientWidth, container.clientHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 
-document.getElementById('webgl-container').appendChild(renderer.domElement);
+container.appendChild(renderer.domElement);
 
 // Orbit controls
 const camControls = new OrbitControls(camera, renderer.domElement);
@@ -45,38 +46,254 @@ scene.add(headLight);
 const gui = new GUI();
 const guiContainer = document.createElement('div');
 guiContainer.id = 'model-gui';
+guiContainer.setAttribute('aria-label', 'Scene controls');
 document.body.appendChild(guiContainer);
 
+const guiToggle = document.createElement('button');
+guiToggle.id = 'model-gui-toggle';
+guiToggle.type = 'button';
+guiToggle.setAttribute('aria-controls', guiContainer.id);
+guiToggle.addEventListener('click', () => {
+  guiContainer.hidden = !guiContainer.hidden;
+  guiToggle.setAttribute('aria-expanded', String(!guiContainer.hidden));
+  guiToggle.textContent = guiContainer.hidden ? 'Show controls' : 'Hide controls';
+});
+document.body.appendChild(guiToggle);
+
+const compactViewport = window.matchMedia('(max-width: 700px), (max-height: 500px)');
+guiContainer.hidden = compactViewport.matches;
+guiToggle.setAttribute('aria-expanded', String(!guiContainer.hidden));
+guiToggle.textContent = guiContainer.hidden ? 'Show controls' : 'Hide controls';
+compactViewport.addEventListener('change', () => {
+  guiContainer.hidden = compactViewport.matches;
+  guiToggle.setAttribute('aria-expanded', String(!guiContainer.hidden));
+  guiToggle.textContent = guiContainer.hidden ? 'Show controls' : 'Hide controls';
+});
+
+const priceBar = document.createElement('div');
+priceBar.id = 'model-price-bar';
+
+const priceDisplay = document.createElement('div');
+priceDisplay.id = 'model-price';
+priceDisplay.setAttribute('role', 'status');
+priceDisplay.setAttribute('aria-live', 'polite');
+priceBar.appendChild(priceDisplay);
+priceDisplay.classList.add('cursive')
+
+const confirmButton = document.createElement('button');
+confirmButton.id = 'model-confirm';
+confirmButton.type = 'button';
+confirmButton.textContent = 'Confirm';
+confirmButton.addEventListener('click', execute);
+priceBar.appendChild(confirmButton);
+document.body.appendChild(priceBar);
+confirmButton.classList.add('cursive')
 
 // Load models
 const models = [
   { path: reponame + '/models/Cat.glb', position: [0, 0, 0], scale: 30, visible: true },
 
-  { group: 'food', path: reponame + '/models/Watermelon.glb', position: [0, 2, 9], rotation: [0, Math.PI/2 - Math.PI/9, 0], scale: 7, visible: true },
-  { group: 'food', path: reponame + '/models/Juice.glb', position: [0, 2, 8.5], rotation: [0, Math.PI * 1.3, 0], scale: 2 },
-  { group: 'food', path: reponame + '/models/Water.glb', position: [0, -0.3, 8.5], rotation: [0, Math.PI * -0.1, 0], scale: 5 },
-  { group: 'food', path: reponame + '/models/Money.glb', position: [0, -0.2, 9], rotation: [0, 0, 0], scale: 0.3 },
-  { group: 'food', path: reponame + '/models/Orange.glb', position: [0, 2, 9], rotation: [0, 0, 0], scale: 0.05 },
+  { group: 'food', path: reponame + '/models/Watermelon.glb', position: [0, 2, 9], rotation: [0, Math.PI/2 - Math.PI/9, 0], scale: 7, visible: true, price: 4 },
+  { group: 'food', path: reponame + '/models/Juice.glb', position: [0, 2, 8.5], rotation: [0, Math.PI * 1.3, 0], scale: 2, price: 2 },
+  { group: 'food', path: reponame + '/models/Water.glb', position: [0, -0.3, 8.5], rotation: [0, Math.PI * -0.1, 0], scale: 5, price: 1 },
+  { group: 'food', path: reponame + '/models/Money.glb', position: [0, -0.2, 9], rotation: [0, 0, 0], scale: 0.3, price: 3 },
+  { group: 'food', path: reponame + '/models/Orange.glb', position: [0, 2, 9], rotation: [0, 0, 0], scale: 0.05, price: 2 },
   
-  { group: 'face', path: reponame + '/models/Glasses.glb', position: [-0.75, 8.4, 7.95], scale: 4.1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#4e475e' },
-  { group: 'face', path: reponame + '/models/Monocle.glb', position: [0.1, 0.1, 6.4], scale: 0.8, rotation: [0, -Math.PI/7, 0] },
-  { group: 'face', path: reponame + '/models/Bowtie.glb', position: [0, 5, 5.9], rotation: [0, -Math.PI * 0.09, 0], scale: 0.008 },
-  { group: 'face', path: reponame + '/models/Thug Life.glb', position: [0, 0, 5.9], rotation: [0, Math.PI * 0.4, 0], scale: [1, 0.8, 1] },
+  { group: 'face', path: reponame + '/models/Glasses.glb', position: [-0.75, 8.4, 7.95], scale: 4.1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#4e475e', price: 1 },
+  { group: 'face', path: reponame + '/models/Monocle.glb', position: [0.1, 0.1, 6.4], scale: 0.8, rotation: [0, -Math.PI/7, 0], price: 4 },
+  { group: 'face', path: reponame + '/models/Bowtie.glb', position: [0, 5, 5.9], rotation: [0, -Math.PI * 0.09, 0], scale: 0.008, price: 2 },
+  { group: 'face', path: reponame + '/models/Thug Life.glb', position: [0, 0, 5.9], rotation: [0, Math.PI * 0.4, 0], scale: [1, 0.8, 1], price: 3 },
   
-  { group: 'hat', path: reponame + '/models/Propeller Hat.glb', position: [0.5, 9.5, 6], scale: 1.7, rotation: [0, -Math.PI/7, 0], visible: true },
-  { group: 'hat', path: reponame + '/models/Hat.glb', position: [0.5, 8.8, 5.7], scale: 1.9, rotation: [-Math.PI * 0.05, -Math.PI/7, -Math.PI * 0.05], colorable: true, color: '#695732' },
-  { group: 'hat', path: reponame + '/models/Duck.glb', position: [0.5, 10.25, 6], scale: 1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#fff133'},
-  { group: 'hat', path: reponame + '/models/Frog.glb', position: [0.5, 10.7, 6], scale: 0.2, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#33ff4e'},
-  { group: 'hat', path: reponame + '/models/Witch Hat.glb', position: [0.5, 14.5, 6], scale: 10, rotation: [0, Math.PI*0.3, 0] },
+  { group: 'hat', path: reponame + '/models/Propeller Hat.glb', position: [0.5, 9.5, 6], scale: 1.7, rotation: [0, -Math.PI/7, 0], visible: true, price: 2 },
+  { group: 'hat', path: reponame + '/models/Hat.glb', position: [0.5, 8.8, 5.7], scale: 1.9, rotation: [-Math.PI * 0.05, -Math.PI/7, -Math.PI * 0.05], colorable: true, color: '#695732', price: 1 },
+  { group: 'hat', path: reponame + '/models/Duck.glb', position: [0.5, 10.25, 6], scale: 1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#fff133', price: 5},
+  { group: 'hat', path: reponame + '/models/Frog.glb', position: [0.5, 10.7, 6], scale: 0.2, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#33ff4e', price: 4},
+  { group: 'hat', path: reponame + '/models/Witch Hat.glb', position: [0.5, 14.5, 6], scale: 10, rotation: [0, Math.PI*0.3, 0], price: 2 },
 
-  { group: 'scene', path: reponame + '/models/Bed.glb', position: [0, -5.5, 1], rotation: [0, 0, 0], scale: 10 },
-  { group: 'scene', path: reponame + '/models/Classroom.glb', position: [8, -33.5, -5], rotation: [0, -Math.PI*0.1, 0], scale: 10 },
-  { group: 'scene', path: reponame + '/models/Tea Room.glb', position: [8, -16.2, -5], rotation: [0, -Math.PI*0.4, 0], scale: 0.5 },
+  { group: 'scene', path: reponame + '/models/Bed.glb', position: [0, -5.5, 1], rotation: [0, 0, 0], scale: 10, price: 3 },
+  { group: 'scene', path: reponame + '/models/Classroom.glb', position: [8, -33.5, -5], rotation: [0, -Math.PI*0.1, 0], scale: 10, price: 1 },
+  { group: 'scene', path: reponame + '/models/Tea Room.glb', position: [8, -16.2, -5], rotation: [0, -Math.PI*0.4, 0], scale: 0.5, price: 2 },
   
-  { group: 'food', path: reponame + '/models/Maxwell.glb', position: [0, 0, 9], rotation: [0, -Math.PI*0.2, 0], scale: 10 },
+  { group: 'food', path: reponame + '/models/Maxwell.glb', position: [0, 0, 9], rotation: [0, -Math.PI*0.2, 0], scale: 10, price: 666 },
   
-  { path: reponame + '/models/Sword.glb', position: [-11, 2, 11.2], rotation: [-Math.PI * 0.2, Math.PI * 0.9, Math.PI * 0.4], scale: 10 },
+  { path: reponame + '/models/Sword.glb', position: [-11, 2, 11.2], rotation: [-Math.PI * 0.2, Math.PI * 0.9, Math.PI * 0.4], scale: 10, price: 10 },
 ];
+
+function getCost() {
+  return models.reduce(
+    (sum, item) => sum + (item.visible === true ? item.price ?? 0 : 0),
+    0
+  )
+}
+
+function updatePrice() {
+  const total = getCost()
+  priceDisplay.textContent = `Cost: ${total} Meows`;
+}
+
+const meowParticleColors = ['#F6A6C8', '#B8A7F2', '#A8DADC', '#FFD6A5'];
+const meowParticleDelay = 1;
+const meowParticleTextures = new Map();
+const meowParticles = [];
+
+function getMeowParticleTexture(color) {
+  if (!meowParticleTextures.has(color)) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 96;
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Could not create the meow particle texture.');
+    }
+
+    context.font = 'bold 68px sans-serif';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.lineWidth = 5;
+    context.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    context.strokeText('meow', canvas.width / 2, canvas.height / 2);
+    context.fillStyle = color;
+    context.fillText('meow', canvas.width / 2, canvas.height / 2);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    meowParticleTextures.set(color, texture);
+  }
+
+  return meowParticleTextures.get(color);
+}
+
+function spawnMeowParticles(count) {
+  const cat = loadedObjects.get(0);
+  const origin = new THREE.Vector3(0, 11.5, 6.5);
+
+  if (cat) {
+    cat.getWorldPosition(origin);
+    origin.add(new THREE.Vector3(0, 11.5, 6.5));
+  }
+
+  for (let i = 0; i < count; i++) {
+    const color = meowParticleColors[
+      Math.floor(Math.random() * meowParticleColors.length)
+    ];
+    const material = new THREE.SpriteMaterial({
+      map: getMeowParticleTexture(color),
+      transparent: true,
+      depthWrite: false
+    });
+    const sprite = new THREE.Sprite(material);
+    const startX = origin.x + (Math.random() - 0.5) * 2.5;
+    const startY = origin.y + Math.random() * 0.4;
+
+    sprite.position.set(
+      startX,
+      startY,
+      origin.z + (Math.random() - 0.5) * 0.8
+    );
+    sprite.scale.set(9, 3.375, 1);
+
+    meowParticles.push({
+      sprite,
+      material,
+      startX,
+      startY,
+      delay: meowParticleDelay * i,
+      elapsed: 0,
+      spawned: false,
+      lifetime: 2 + Math.random() * 0.8,
+      rise: 7 + Math.random() * 3,
+      swayAmount: 0.3 + Math.random() * 0.6,
+      swayFrequency: 1.5 + Math.random() * 1.5,
+      swayPhase: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+function updateMeowParticles(deltaTime) {
+  for (let i = meowParticles.length - 1; i >= 0; i--) {
+    const particle = meowParticles[i];
+    particle.elapsed += deltaTime;
+    if (particle.elapsed < particle.delay) continue;
+
+    if (!particle.spawned) {
+      scene.add(particle.sprite);
+      particle.spawned = true;
+    }
+
+    const age = particle.elapsed - particle.delay;
+    const progress = Math.min(age / particle.lifetime, 1);
+    const sway = Math.sin(
+      age * particle.swayFrequency + particle.swayPhase
+    ) * particle.swayAmount + Math.sin(
+      age * particle.swayFrequency * 2.1 + particle.swayPhase
+    ) * particle.swayAmount * 0.2;
+
+    particle.sprite.position.x = particle.startX + sway;
+    particle.sprite.position.y = particle.startY + particle.rise * progress;
+    particle.material.opacity = 1 - THREE.MathUtils.smoothstep(progress, 0.45, 1);
+
+    if (progress === 1) {
+      scene.remove(particle.sprite);
+      particle.material.dispose();
+      meowParticles.splice(i, 1);
+    }
+  }
+}
+
+function execute() {
+  let cost = getCost()
+  spawnMeowParticles(cost);
+  playMeows(cost)
+}
+
+const meowFiles = [
+  '/sounds/meow3.mp3',
+  '/sounds/meow2.mp3',
+  '/sounds/meow4.mp3',
+  '/sounds/meow5.mp3',
+  '/sounds/meow6.mp3',
+  '/sounds/meow7.mp3',
+  '/sounds/meow8.mp3',
+  '/sounds/meow2.mp3',
+  '/sounds/meow4.mp3',
+  '/sounds/meow5.mp3',
+  '/sounds/meow6.mp3',
+  '/sounds/meow7.mp3',
+  '/sounds/meow8.mp3',
+];
+
+async function playMeows(count) {
+  if (!Number.isSafeInteger(count) || count < 0) {
+    throw new Error('Enter a non-negative whole number.');
+  }
+
+  let previousIndex = -1;
+
+  for (let i = 0; i < count; i++) {
+    let index = Math.floor(Math.random() * meowFiles.length);
+
+    // Avoid an identical sound back-to-back when there is more than one choice.
+    while (meowFiles.length > 1 && index === previousIndex) {
+      index = Math.floor(Math.random() * meowFiles.length);
+    }
+    previousIndex = index;
+
+    const audio = new Audio(meowFiles[index]);
+    audio.playbackRate = 0.96 + Math.random() * 0.08;
+
+    await new Promise((resolve, reject) => {
+      audio.addEventListener('ended', resolve, { once: true });
+      audio.addEventListener('error', () => {
+        reject(new Error(`Could not load ${meowFiles[index]}`));
+      }, { once: true });
+
+      audio.play().catch(reject);
+    });
+  }
+}
+
+updatePrice();
 
 const loadedObjects = new Map();
 const groups = new Map();
@@ -137,7 +354,9 @@ function clearGroup(groupName) {
   for (const entry of groups.get(groupName) ?? []) {
     const object = loadedObjects.get(entry.index);
     if (object) object.visible = false;
+    entry.item.visible = false;
   }
+  updatePrice();
 }
 
 
@@ -234,13 +453,17 @@ function createControl(entry, type, section, radioName) {
       const groupItems = groups.get(item.group) ?? [];
       for (const other of groupItems) {
         const object = loadedObjects.get(other.index);
-        if (object) object.visible = other.index === index;
+        const visible = other.index === index;
+        if (object) object.visible = visible;
+        other.item.visible = visible;
       }
     } else {
       // Standalone items toggle independently.
       const object = loadedObjects.get(index);
       if (object) object.visible = input.checked;
+      item.visible = input.checked;
     }
+    updatePrice();
   });
 }
 
@@ -293,17 +516,32 @@ models.forEach((item, index) => {
   });
 });
 
-// Resize
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+// Resize the scene and adjust its framing for narrow viewports.
+let viewportZoom = 1;
+function resizeScene() {
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  const aspect = width / height;
+  const nextViewportZoom = THREE.MathUtils.clamp(1.15 / aspect, 1, 1.5);
+  const cameraOffset = camera.position.clone().sub(camControls.target);
+  cameraOffset.setLength(cameraOffset.length() * nextViewportZoom / viewportZoom);
+  camera.position.copy(camControls.target).add(cameraOffset);
+  viewportZoom = nextViewportZoom;
+
+  camera.aspect = aspect;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+  renderer.setSize(width, height);
+}
+
+window.addEventListener('resize', resizeScene);
+resizeScene();
 
 // Render loop
+const clock = new THREE.Clock();
 function animate() {
   requestAnimationFrame(animate);
   camControls.update();
+  updateMeowParticles(clock.getDelta());
 
   headLight.position.copy(camera.position);
   renderer.render(scene, camera);

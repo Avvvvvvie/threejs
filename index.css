@@ -1,5 +1,23 @@
 body {
     margin: 0;
+    overflow: hidden;
+}
+
+* {
+    font: 13px/1.3 'Courier New', Courier, monospace;
+}
+
+#webgl-container {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+
+#webgl-container canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
 .lil-gui {
@@ -8,15 +26,66 @@ body {
 
 #model-gui {
     position: fixed;
-    top: 16px;
+    top: 64px;
     right: 16px;
-    width: 200px;
+    box-sizing: border-box;
+    width: min(260px, calc(100vw - 32px));
+    max-height: calc(100vh - 80px);
+    max-height: calc(100dvh - 80px);
+    overflow-y: auto;
     padding: 14px;
     background: rgb(244, 220, 206);
     color: #191919;
-    font: 13px/1.5 'Courier New', Courier, monospace;
     border-radius: 8px;
     z-index: 1000;
+}
+
+#model-gui[hidden] {
+    display: none;
+}
+
+#model-gui-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 1001;
+    border: 1px solid #191919;
+    border-radius: 6px;
+    padding: 8px 12px;
+    background: rgb(244, 220, 206);
+    color: #191919;
+    cursor: pointer;
+}
+
+#model-price-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#model-price,
+#model-confirm {
+    padding: 8px 16px;
+    border: 2px solid #191919;
+    border-radius: 6px;
+    background: rgb(244, 220, 206);
+    color: #191919;
+    white-space: nowrap;
+    font-family: cursive;
+    font-size: 1.3rem;
+}
+
+#model-confirm {
+    cursor: pointer;
+}
+
+#model-price {
+    pointer-events: none;
 }
 
 .model-group {
@@ -100,4 +169,30 @@ body {
 
 .model-option span {
   flex: 1;
+}
+
+@media (max-width: 700px), (max-height: 500px) {
+    #model-gui {
+        top: 58px;
+        right: 12px;
+        width: min(240px, calc(100vw - 24px));
+        max-height: calc(100vh - 72px);
+        max-height: calc(100dvh - 72px);
+        padding: 12px;
+    }
+
+    #model-gui-toggle {
+        top: 12px;
+        right: 12px;
+    }
+
+    #model-price-bar {
+        bottom: 12px;
+        gap: 6px;
+    }
+
+    #model-price,
+    #model-confirm {
+        padding: 8px 12px;
+    }
 }
