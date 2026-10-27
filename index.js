@@ -56,18 +56,18 @@ guiToggle.setAttribute('aria-controls', guiContainer.id);
 guiToggle.addEventListener('click', () => {
   guiContainer.hidden = !guiContainer.hidden;
   guiToggle.setAttribute('aria-expanded', String(!guiContainer.hidden));
-  guiToggle.textContent = guiContainer.hidden ? 'Show controls' : 'Hide controls';
+  guiToggle.textContent = guiContainer.hidden ? 'Show menu' : 'Hide menu';
 });
 document.body.appendChild(guiToggle);
 
 const compactViewport = window.matchMedia('(max-width: 700px), (max-height: 500px)');
 guiContainer.hidden = compactViewport.matches;
 guiToggle.setAttribute('aria-expanded', String(!guiContainer.hidden));
-guiToggle.textContent = guiContainer.hidden ? 'Show controls' : 'Hide controls';
+guiToggle.textContent = guiContainer.hidden ? 'Show menu' : 'Hide menu';
 compactViewport.addEventListener('change', () => {
   guiContainer.hidden = compactViewport.matches;
   guiToggle.setAttribute('aria-expanded', String(!guiContainer.hidden));
-  guiToggle.textContent = guiContainer.hidden ? 'Show controls' : 'Hide controls';
+  guiToggle.textContent = guiContainer.hidden ? 'Show menu' : 'Hide menu';
 });
 
 const priceBar = document.createElement('div');
