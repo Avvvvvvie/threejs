@@ -160,7 +160,7 @@ const models = [
   
   { group: 'food', path: reponame + '/models/Maxwell.glb', position: [0, 0, 9], rotation: [0, -Math.PI*0.2, 0], scale: 10, price: 666 },
   
-  { path: reponame + '/models/Sword.glb', position: [-11, 2, 11.2], rotation: [-Math.PI * 0.2, Math.PI * 0.9, Math.PI * 0.4], scale: 10, price: 10 },
+  { path: reponame + '/models/Sword.glb', position: [-11, 5, 8], rotation: [-Math.PI * 0.35, Math.PI * 0.9, Math.PI * 0.5], scale: 10, price: 10 },
 ]
 
 function getCost() {
