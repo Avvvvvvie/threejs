@@ -209,6 +209,11 @@ function getParticleTexture(text, color) {
 }
 
 function createParticle(origin, text, delay = 0, fixedColor = null) {
+  let oldText = text
+  if(soundMuted) {
+    text = '?'
+  }
+
   const color = fixedColor ?? particleColors[
     Math.floor(Math.random() * particleColors.length)
   ]
@@ -242,7 +247,8 @@ function createParticle(origin, text, delay = 0, fixedColor = null) {
     swayFrequency: 1.5 + Math.random() * 1.5,
     swayPhase: Math.random() * Math.PI * 2,
     color,
-    text
+    text,
+    oldText
   })
 }
 
