@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.20.0/+esm'
 
-const reponame = ''
+const reponame = '/threejs'
 
 const scene = new THREE.Scene()
 
