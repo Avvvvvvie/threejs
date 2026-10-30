@@ -2,8 +2,6 @@
 
 Site: https://avvvvvvie.github.io/threejs/
 
-Code: https://github.com/Avvvvvvie/threejs
-
 ### Features
 
 - Meowing
