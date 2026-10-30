@@ -177,10 +177,74 @@ function clearGroup(groupName) {
   updatePrice()
 }
 
+function getHue(r, g, b) {
+  const maximum = Math.max(r, g, b)
+  const minimum = Math.min(r, g, b)
+  const delta = maximum - minimum
+  if (delta === 0) return 0
 
+  let hue
+  if (maximum === r) hue = (g - b) / delta % 6
+  else if (maximum === g) hue = (b - r) / delta + 2
+  else hue = (r - g) / delta + 4
+
+  return (hue / 6 + 1) % 1
+}
+
+function getColorHue(color) {
+  const value = Number.parseInt(color.slice(1), 16)
+  return getHue(
+    ((value >> 16) & 255) / 255,
+    ((value >> 8) & 255) / 255,
+    (value & 255) / 255
+  )
+}
+
+function hslToRgb(hue, saturation, lightness) {
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation
+  const segment = hue * 6
+  const secondary = chroma * (1 - Math.abs(segment % 2 - 1))
+  const offset = lightness - chroma / 2
+  const sector = Math.floor(segment)
+
+  let r = 0
+  let g = 0
+  let b = 0
+  if (sector === 0) [r, g] = [chroma, secondary]
+  else if (sector === 1) [r, g] = [secondary, chroma]
+  else if (sector === 2) [g, b] = [chroma, secondary]
+  else if (sector === 3) [g, b] = [secondary, chroma]
+  else if (sector === 4) [r, b] = [secondary, chroma]
+  else [r, b] = [chroma, secondary]
+
+  return [r + offset, g + offset, b + offset]
+}
+
+function rotateImageHue(imageData, originalPixels, hueShift) {
+  const pixels = imageData.data
+  pixels.set(originalPixels)
+
+  for (let i = 0; i < pixels.length; i += 4) {
+    const r = originalPixels[i] / 255
+    const g = originalPixels[i + 1] / 255
+    const b = originalPixels[i + 2] / 255
+    const maximum = Math.max(r, g, b)
+    const minimum = Math.min(r, g, b)
+    const delta = maximum - minimum
+    if (delta === 0) continue
+
+    const lightness = (maximum + minimum) / 2
+    const saturation = delta / (1 - Math.abs(2 * lightness - 1))
+    const hue = (getHue(r, g, b) + hueShift + 1) % 1
+    const [nextR, nextG, nextB] = hslToRgb(hue, saturation, lightness)
+    pixels[i] = nextR * 255
+    pixels[i + 1] = nextG * 255
+    pixels[i + 2] = nextB * 255
+  }
+}
 
 function applyModelColor(object, color) {
-  const target = new THREE.Color(color)
+  const targetHue = getColorHue(color)
 
   object.traverse((child) => {
     if (!child.isMesh || !child.material) return
@@ -190,36 +254,85 @@ function applyModelColor(object, color) {
       : [child.material]
 
     materials.forEach((material) => {
-      if (!material.color) return
+      if (!material.map) return
 
-      if (!material.userData.originalRGB) {
-        material.userData.originalRGB = {
-          r: material.color.r,
-          g: material.color.g,
-          b: material.color.b
+      let tint = material.userData.hueTint
+      if (!tint) {
+        const image = material.map.image
+        const width = image?.width ?? image?.naturalWidth
+        const height = image?.height ?? image?.naturalHeight
+        if (!width || !height) {
+          console.error('Cannot tint model material without a readable texture image.')
+          return
+        }
+
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const context = canvas.getContext('2d', { willReadFrequently: true })
+        if (!context) {
+          console.error('Cannot tint model material: 2D canvas is unavailable.')
+          return
+        }
+
+        context.drawImage(image, 0, 0, width, height)
+        const imageData = context.getImageData(0, 0, width, height)
+        tint = material.userData.hueTint = {
+          baseHue: targetHue,
+          sourceTexture: material.map,
+          texture: null,
+          context,
+          canvas,
+          imageData,
+          originalPixels: new Uint8ClampedArray(imageData.data)
         }
       }
 
-      const original = material.userData.originalRGB
+      const hueShift = targetHue - tint.baseHue
+      if (Math.abs(hueShift) < 1e-6 && !tint.texture) return
 
-      const dr = original.r - target.r
-      const dg = original.g - target.g
-      const db = original.b - target.b
+      if (!tint.texture) {
+        tint.texture = tint.sourceTexture.clone()
+        tint.texture.image = tint.canvas
+        material.map = tint.texture
+        material.needsUpdate = true
+      }
 
-      const distance = Math.sqrt(dr * dr + dg * dg + db * db) /
-        Math.sqrt(3)
-
-      // Identical colors: no change.
-      // Contrasting colors: strong replacement.
-      const strength = THREE.MathUtils.smoothstep(distance, 0.2, 0.9)
-
-      material.color.setRGB(
-        THREE.MathUtils.lerp(original.r, target.r, strength),
-        THREE.MathUtils.lerp(original.g, target.g, strength),
-        THREE.MathUtils.lerp(original.b, target.b, strength)
-      )
+      rotateImageHue(tint.imageData, tint.originalPixels, hueShift)
+      tint.context.putImageData(tint.imageData, 0, 0)
+      tint.texture.needsUpdate = true
     })
   })
+}
+
+function replaceModelComponents(object, color, item) {
+  const target = new THREE.Color(color)
+  const meshNames = new Set(item.colorMeshes ?? [])
+  const materialNames = new Set(item.colorMaterials ?? [])
+
+  object.traverse((child) => {
+    if (!child.isMesh || !child.material) return
+
+    const materials = Array.isArray(child.material)
+      ? child.material
+      : [child.material]
+    const replaceMeshMaterials = meshNames.has(child.name)
+
+    materials.forEach((material) => {
+      if (!material.color) return
+      if (!replaceMeshMaterials && !materialNames.has(material.name)) return
+
+      material.color.copy(target)
+    })
+  })
+}
+
+function updateModelColor(object, color, item) {
+  if (item.colorMode === 'tint') {
+    applyModelColor(object, color)
+  } else {
+    replaceModelComponents(object, color, item)
+  }
 }
 
 function createControl(entry, type, section, radioName) {
@@ -253,7 +366,7 @@ function createControl(entry, type, section, radioName) {
 
     colorInput.addEventListener('input', () => {
       const object = loadedObjects.get(index)
-      if (object) applyModelColor(object, colorInput.value)
+      if (object) updateModelColor(object, colorInput.value, item)
       item.color = colorInput.value
     })
 
@@ -324,7 +437,7 @@ models.forEach((item, index) => {
     object.visible = item.visible === true
     if (item.colorable) {
       const initialColor = item.color ?? '#ffffff'
-      applyModelColor(object, initialColor)
+      updateModelColor(object, initialColor, item)
     }
 
     loadedObjects.set(index, object)

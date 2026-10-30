@@ -58,7 +58,8 @@ export const models = [
     scale: 4.1,
     rotation: [0, -Math.PI / 7, 0],
     colorable: true,
-    color: '#4e475e',
+    colorMaterials: ['frame', 'frame_grad', 'frame_grad2'],
+    color: '#2c2a31',
     price: -1
   },
   {
@@ -102,7 +103,8 @@ export const models = [
     scale: 1.9,
     rotation: [-Math.PI * 0.05, -Math.PI / 7, -Math.PI * 0.05],
     colorable: true,
-    color: '#695732',
+    colorMeshes: ['Cube_0'],
+    color: '#6e6ce3',
     price: -5
   },
   {
@@ -112,7 +114,8 @@ export const models = [
     scale: 1,
     rotation: [0, -Math.PI / 7, 0],
     colorable: true,
-    color: '#fff133',
+    colorMaterials: ['Yellow'],
+    color: '#ffda33',
     price: 5
   },
   {
@@ -122,7 +125,8 @@ export const models = [
     scale: 0.2,
     rotation: [0, -Math.PI / 7, 0],
     colorable: true,
-    color: '#33ff4e',
+    colorMode: 'tint',
+    color: '#8fff9e',
     price: 4
   },
   {
