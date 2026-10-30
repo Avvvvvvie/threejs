@@ -37,7 +37,7 @@ body {
     line-height: 1;
     text-align: center;
     pointer-events: none;
-    animation: disapproval 3s ease-in-out forwards;
+    animation: disapproval var(--overlay-duration, 3s) ease-in-out forwards;
 }
 
 @keyframes disapproval {

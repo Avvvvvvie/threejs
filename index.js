@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.20.0/+esm';
 
-const reponame = '/threejs'
+const reponame = ''
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xEEEEEE);
@@ -105,7 +105,7 @@ const models = [
   { group: 'face', path: reponame + '/models/Thug Life.glb', position: [0, 0, 5.9], rotation: [0, Math.PI * 0.4, 0], scale: [1, 0.8, 1], price: 3 },
   
   { group: 'hat', path: reponame + '/models/Propeller Hat.glb', position: [0.5, 9.5, 6], scale: 1.7, rotation: [0, -Math.PI/7, 0], visible: true, price: 2 },
-  { group: 'hat', path: reponame + '/models/Hat.glb', position: [0.5, 8.8, 5.7], scale: 1.9, rotation: [-Math.PI * 0.05, -Math.PI/7, -Math.PI * 0.05], colorable: true, color: '#695732', price: 1 },
+  { group: 'hat', path: reponame + '/models/Hat.glb', position: [0.5, 8.8, 5.7], scale: 1.9, rotation: [-Math.PI * 0.05, -Math.PI/7, -Math.PI * 0.05], colorable: true, color: '#695732', price: -5 },
   { group: 'hat', path: reponame + '/models/Duck.glb', position: [0.5, 10.25, 6], scale: 1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#fff133', price: 5},
   { group: 'hat', path: reponame + '/models/Frog.glb', position: [0.5, 10.7, 6], scale: 0.2, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#33ff4e', price: 4},
   { group: 'hat', path: reponame + '/models/Witch Hat.glb', position: [0.5, 14.5, 6], scale: 10, rotation: [0, Math.PI*0.3, 0], price: 2 },
@@ -257,6 +257,20 @@ const meowFiles = [
   reponame + '/sounds/meow8.mp3',
 ];
 
+function playSound(soundFile, playbackRate = 1) {
+  const audio = new Audio(soundFile);
+  audio.playbackRate = playbackRate;
+
+  return new Promise((resolve, reject) => {
+    audio.addEventListener('ended', resolve, { once: true });
+    audio.addEventListener('error', () => {
+      reject(new Error(`Could not load ${soundFile}`));
+    }, { once: true });
+
+    audio.play().catch(reject);
+  });
+}
+
 async function playMeows(count) {
   if (!Number.isSafeInteger(count) || count < 0) {
     throw new Error('Enter a non-negative whole number.');
@@ -273,45 +287,42 @@ async function playMeows(count) {
     }
     previousIndex = index;
 
-    const audio = new Audio(meowFiles[index]);
-    audio.playbackRate = 0.96 + Math.random() * 0.08;
-
-    await new Promise((resolve, reject) => {
-      audio.addEventListener('ended', resolve, { once: true });
-      audio.addEventListener('error', () => {
-        reject(new Error(`Could not load ${meowFiles[index]}`));
-      }, { once: true });
-
-      audio.play().catch(reject);
-    });
+    await playSound(meowFiles[index], 0.96 + Math.random() * 0.08);
   }
 }
 
+function overlay(text, className, role = 'status', duration = 3000) {
+  let element = document.createElement('div');
+  element.className = className;
+  element.setAttribute('role', role);
+  element.textContent = text;
+  element.style.setProperty('--overlay-duration', `${duration}ms`);
+  document.body.appendChild(element);
+
+  let timeoutId;
+  const stop = () => {
+    if (!element) return;
+    window.clearTimeout(timeoutId);
+    element.remove();
+    element = null;
+  };
+  timeoutId = window.setTimeout(stop, duration);
+
+  return stop;
+}
+
 let disapprovalOverlay;
-
 function disapprove() {
-  disapprovalOverlay?.remove();
-
-  const overlay = document.createElement('div');
-  overlay.className = 'disapproval-overlay';
-  overlay.setAttribute('role', 'alert');
-  overlay.textContent = 'disapproved';
-  window.setTimeout(() => {
-    if (disapprovalOverlay === overlay) {
-      disapprovalOverlay = null;
-    }
-    overlay.remove();
-  }, 3000);
-
-  disapprovalOverlay = overlay;
-  document.body.appendChild(overlay);
+  playSound(reponame + '/sounds/disapproval.mp3').catch(console.error);
+  disapprovalOverlay?.();
+  disapprovalOverlay = overlay('disapproved', 'disapproval-overlay', 'alert', 6000);
 }
 
 function execute() {
   let cost = getCost()
   if(cost > 0) {
       spawnMeowParticles(cost);
-      playMeows(cost)
+      playMeows(cost).catch(console.error);
   } else {
       disapprove()
   }
@@ -427,8 +438,6 @@ function applyModelColor(object, color) {
     });
   });
 }
-
-
 
 function createControl(entry, type, section, radioName) {
   const { item, index } = entry;
