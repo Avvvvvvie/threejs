@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">
+    <defs>
+
+        <g id="cat" opacity=".08">
+            <path d="M5 23 3 3l22 12a26 26 0 0 1 14 0L61 3l-2 20c4 5 5 11 5 17 0 14-13 23-32 23S0 54 0 40c0-6 1-12 5-17Z" fill="#191919" mask="url(#cat-cutouts)"/>
+        </g>
+    </defs>
+    <use href="#cat" transform="translate(14 12) scale(.72)"/>
+    <use href="#cat" transform="translate(86 84) scale(.72)"/>
+</svg>

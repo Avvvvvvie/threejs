@@ -6,14 +6,13 @@ import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.20.0/+esm'
 const reponame = ''
 
 const scene = new THREE.Scene()
-scene.background = new THREE.Color(0xEEEEEE)
 
 const camera = new THREE.PerspectiveCamera(
   45, window.innerWidth / window.innerHeight, 0.1, 1000
 )
 camera.position.set(-25, 30, 50)
 
-const renderer = new THREE.WebGLRenderer({ antialias: true })
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
 const container = document.getElementById('webgl-container')
 renderer.setSize(container.clientWidth, container.clientHeight)
 renderer.setPixelRatio(window.devicePixelRatio)

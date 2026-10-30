@@ -12,6 +12,7 @@ body {
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
+    background: #EEEEEE url("cat-pattern.svg") repeat;
 }
 
 #webgl-container canvas {
