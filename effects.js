@@ -193,19 +193,51 @@ export function createEffects(scene, getCat) {
     activeSounds.add(audio)
 
     return new Promise((resolve, reject) => {
-      audio.addEventListener('playing', () => onStart?.(audio), { once: true })
-      audio.addEventListener('ended', () => {
+      let durationTimeout
+      let hasDuration = false
+      let hasStarted = false
+      let settled = false
+
+      const cleanup = () => {
+        window.clearTimeout(durationTimeout)
         activeSounds.delete(audio)
-        resolve()
-      }, { once: true })
-      audio.addEventListener('error', () => {
-        activeSounds.delete(audio)
-        reject(new Error(`Could not load ${soundFile}`))
-      }, { once: true })
+        audio.removeEventListener('playing', onPlaying)
+        audio.removeEventListener('ended', onEnded)
+        audio.removeEventListener('error', onError)
+      }
+
+      const finish = error => {
+        if (settled) return
+        settled = true
+        cleanup()
+        if (error) {
+          reject(error)
+        } else {
+          resolve()
+        }
+      }
+
+      const onPlaying = () => {
+        if (hasStarted) return
+        hasStarted = true
+        const duration = audio.duration / audio.playbackRate
+        if (Number.isFinite(duration) && duration > 0) {
+          hasDuration = true
+          durationTimeout = window.setTimeout(finish, Math.ceil(duration * 1000))
+        }
+        onStart?.(audio)
+      }
+      const onEnded = () => {
+        if (!hasDuration) finish()
+      }
+      const onError = () => finish(new Error(`Could not load ${soundFile}`))
+
+      audio.addEventListener('playing', onPlaying)
+      audio.addEventListener('ended', onEnded)
+      audio.addEventListener('error', onError)
 
       audio.play().catch(error => {
-        activeSounds.delete(audio)
-        reject(error)
+        finish(error)
       })
     })
   }
