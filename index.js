@@ -1,10 +1,10 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
-import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.20.0/+esm'
+import { createEffects } from './effects.js'
+import { models } from './models.js'
 
-const reponame = '/threejs'
-
+// Scene setup
 const scene = new THREE.Scene()
 
 const camera = new THREE.PerspectiveCamera(
@@ -25,9 +25,6 @@ camControls.enableDamping = true
 camControls.dampingFactor = 0.2
 camControls.target.set(5, 5, 5)
 
-// Axes
-//scene.add(new THREE.AxesHelper(20))
-
 // Lighting
 scene.add(new THREE.AmbientLight(0xffead2, 2.5))
 
@@ -42,7 +39,9 @@ scene.add(spotLight)
 const headLight = new THREE.PointLight(0xffdfb5, 1)
 scene.add(headLight)
 
-const gui = new GUI()
+const loadedObjects = new Map()
+
+// Scene controls and price display
 const guiContainer = document.createElement('div')
 guiContainer.id = 'model-gui'
 guiContainer.setAttribute('aria-label', 'Scene controls')
@@ -59,50 +58,7 @@ guiToggle.addEventListener('click', () => {
 })
 document.body.appendChild(guiToggle)
 
-let soundMuted = false
-const activeSounds = new Set()
-const soundToggle = document.createElement('button')
-soundToggle.id = 'sound-toggle'
-soundToggle.type = 'button'
-soundToggle.setAttribute('aria-pressed', 'false')
-soundToggle.addEventListener('click', () => {
-  soundMuted = !soundMuted
-  activeSounds.forEach(audio => {
-    audio.muted = soundMuted
-  })
-  updateSoundToggle()
-
-  if (soundMuted) {
-    onMute()
-  } else {
-    onUnmute()
-  }
-})
-document.body.appendChild(soundToggle)
-
-function updateSoundToggle() {
-  soundToggle.setAttribute('aria-pressed', String(soundMuted))
-  soundToggle.setAttribute('aria-label', soundMuted ? 'Unmute sound' : 'Mute sound')
-  soundToggle.title = soundMuted ? 'Unmute sound' : 'Mute sound'
-  soundToggle.innerHTML = `
-    <svg class="sound-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M9 18V5l12-2v13" />
-      <circle cx="6" cy="18" r="3" />
-      <circle cx="18" cy="16" r="3" />
-      ${soundMuted ? '<path class="sound-icon-slash" d="M3 3l18 18" />' : ''}
-    </svg>
-  `
-}
-
-function onMute() {
-  window.dispatchEvent(new Event('soundmute'))
-}
-
-function onUnmute() {
-  window.dispatchEvent(new Event('soundunmute'))
-}
-
-updateSoundToggle()
+const effects = createEffects(scene, () => loadedObjects.get(0))
 
 const compactViewport = window.matchMedia('(max-width: 700px), (max-height: 500px)')
 guiContainer.hidden = compactViewport.matches
@@ -133,38 +89,9 @@ priceBar.appendChild(confirmButton)
 document.body.appendChild(priceBar)
 confirmButton.classList.add('cursive')
 
-// Load models
-const models = [
-  { path: reponame + '/models/Cat.glb', position: [0, 0, 0], scale: 30, visible: true, price: 666 },
-
-  { group: 'food', path: reponame + '/models/Watermelon.glb', position: [0, 2, 9], rotation: [0, Math.PI/2 - Math.PI/9, 0], scale: 7, visible: true, price: 4 },
-  { group: 'food', path: reponame + '/models/Juice.glb', position: [0, 2, 8.5], rotation: [0, Math.PI * 1.3, 0], scale: 2, price: 2 },
-  { group: 'food', path: reponame + '/models/Water.glb', position: [0, -0.3, 8.5], rotation: [0, Math.PI * -0.1, 0], scale: 5, price: 1 },
-  { group: 'food', path: reponame + '/models/Money.glb', position: [0, -0.2, 9], rotation: [0, 0, 0], scale: 0.3, price: 3 },
-  { group: 'food', path: reponame + '/models/Orange.glb', position: [0, 2, 9], rotation: [0, 0, 0], scale: 0.05, price: 2 },
-  
-  { group: 'face', path: reponame + '/models/Glasses.glb', position: [-0.75, 8.4, 7.95], scale: 4.1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#4e475e', price: -1 },
-  { group: 'face', path: reponame + '/models/Monocle.glb', position: [0.1, 0.1, 6.4], scale: 0.8, rotation: [0, -Math.PI/7, 0], price: 4 },
-  { group: 'face', path: reponame + '/models/Bowtie.glb', position: [0, 5, 5.9], rotation: [0, -Math.PI * 0.09, 0], scale: 0.008, price: 2 },
-  { group: 'face', path: reponame + '/models/Thug Life.glb', position: [0, 0, 5.9], rotation: [0, Math.PI * 0.4, 0], scale: [1, 0.8, 1], price: 3 },
-  
-  { group: 'hat', path: reponame + '/models/Propeller Hat.glb', position: [0.5, 9.5, 6], scale: 1.7, rotation: [0, -Math.PI/7, 0], visible: true, price: 2 },
-  { group: 'hat', path: reponame + '/models/Hat.glb', position: [0.5, 8.8, 5.7], scale: 1.9, rotation: [-Math.PI * 0.05, -Math.PI/7, -Math.PI * 0.05], colorable: true, color: '#695732', price: -5 },
-  { group: 'hat', path: reponame + '/models/Duck.glb', position: [0.5, 10.25, 6], scale: 1, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#fff133', price: 5},
-  { group: 'hat', path: reponame + '/models/Frog.glb', position: [0.5, 10.7, 6], scale: 0.2, rotation: [0, -Math.PI/7, 0], colorable: true, color: '#33ff4e', price: 4},
-  { group: 'hat', path: reponame + '/models/Witch Hat.glb', position: [0.5, 14.5, 6], scale: 10, rotation: [0, Math.PI*0.3, 0], price: 2 },
-
-  { group: 'scene', path: reponame + '/models/Bed.glb', position: [0, -5.5, 1], rotation: [0, 0, 0], scale: 10, price: 3 },
-  { group: 'scene', path: reponame + '/models/Classroom.glb', position: [8, -33.5, -5], rotation: [0, -Math.PI*0.1, 0], scale: 10, price: 1 },
-  { group: 'scene', path: reponame + '/models/Tea Room.glb', position: [8, -16.2, -5], rotation: [0, -Math.PI*0.4, 0], scale: 0.5, price: 2 },
-  
-  { group: 'food', path: reponame + '/models/Maxwell.glb', position: [0, 0, 9], rotation: [0, -Math.PI*0.2, 0], scale: 10, price: 666 },
-  
-  { path: reponame + '/models/Sword.glb', position: [-11, 5, 8], rotation: [-Math.PI * 0.35, Math.PI * 0.9, Math.PI * 0.5], scale: 10, price: 10 },
-]
-
+// Pricing
 function getCost() {
-  return - 666 + models.reduce(
+  return -666 + models.reduce(
     (sum, item) => sum + (item.visible === true ? item.price ?? 0 : 0),
     0
   )
@@ -175,254 +102,18 @@ function updatePrice() {
   priceDisplay.textContent = `Cost: ${total} Meows`
 }
 
-const particleColors = ['#F6A6C8', '#B8A7F2', '#A8DADC', '#FFD6A5']
-const particleTextures = new Map()
-const particles = []
-
-function getParticleTexture(text, color) {
-  const key = JSON.stringify([text, color])
-  if (!particleTextures.has(key)) {
-    const canvas = document.createElement('canvas')
-    canvas.width = 256
-    canvas.height = 96
-
-    const context = canvas.getContext('2d')
-    if (!context) {
-      throw new Error('Could not create the particle texture.')
-    }
-
-    context.font = 'bold 68px sans-serif'
-    context.textAlign = 'center'
-    context.textBaseline = 'middle'
-    context.lineWidth = 5
-    context.strokeStyle = 'rgba(255, 255, 255, 0.8)'
-    context.strokeText(text, canvas.width / 2, canvas.height / 2)
-    context.fillStyle = color
-    context.fillText(text, canvas.width / 2, canvas.height / 2)
-
-    const texture = new THREE.CanvasTexture(canvas)
-    texture.colorSpace = THREE.SRGBColorSpace
-    particleTextures.set(key, texture)
-  }
-
-  return particleTextures.get(key)
-}
-
-function createParticle(origin, text, delay = 0, fixedColor = null) {
-  let oldText = text
-  if(soundMuted) {
-    text = '?'
-  }
-
-  const color = fixedColor ?? particleColors[
-    Math.floor(Math.random() * particleColors.length)
-  ]
-  const material = new THREE.SpriteMaterial({
-    map: getParticleTexture(text, color),
-    transparent: true,
-    depthWrite: false
-  })
-  const sprite = new THREE.Sprite(material)
-  const startX = origin.x + (Math.random() - 0.5) * 2.5
-  const startY = origin.y + Math.random() * 0.4
-
-  sprite.position.set(
-    startX,
-    startY,
-    origin.z + (Math.random() - 0.5) * 0.8
-  )
-  sprite.scale.set(9, 3.375, 1)
-
-  particles.push({
-    sprite,
-    material,
-    startX,
-    startY,
-    delay,
-    elapsed: 0,
-    spawned: false,
-    lifetime: 2 + Math.random() * 0.8,
-    rise: 7 + Math.random() * 3,
-    swayAmount: 0.3 + Math.random() * 0.6,
-    swayFrequency: 1.5 + Math.random() * 1.5,
-    swayPhase: Math.random() * Math.PI * 2,
-    color,
-    text,
-    oldText
-  })
-}
-
-function getCatOrigin() {
-  const cat = loadedObjects.get(0)
-  const origin = new THREE.Vector3(0, 11.5, 6.5)
-
-  if (cat) {
-    cat.getWorldPosition(origin)
-    origin.add(new THREE.Vector3(0, 11.5, 6.5))
-  }
-  return origin
-}
-
-function spawnMeowParticle() {
-  createParticle(getCatOrigin(), 'meow')
-}
-
-function updateParticles(deltaTime) {
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const particle = particles[i]
-    particle.elapsed += deltaTime
-    if (particle.elapsed < particle.delay) continue
-
-    if (!particle.spawned) {
-      scene.add(particle.sprite)
-      particle.spawned = true
-    }
-
-    const age = particle.elapsed - particle.delay
-    const progress = Math.min(age / particle.lifetime, 1)
-    const sway = Math.sin(
-      age * particle.swayFrequency + particle.swayPhase
-    ) * particle.swayAmount + Math.sin(
-      age * particle.swayFrequency * 2.1 + particle.swayPhase
-    ) * particle.swayAmount * 0.2
-
-    particle.sprite.position.x = particle.startX + sway
-    particle.sprite.position.y = particle.startY + particle.rise * progress
-    particle.material.opacity = 1 - THREE.MathUtils.smoothstep(progress, 0.45, 1)
-
-    if (progress === 1) {
-      scene.remove(particle.sprite)
-      particle.material.dispose()
-      particles.splice(i, 1)
-    }
-  }
-}
-
-const meowFiles = [
-  reponame + '/sounds/meow3.mp3',
-  reponame + '/sounds/meow2.mp3',
-  reponame + '/sounds/meow4.mp3',
-  reponame + '/sounds/meow5.mp3',
-  reponame + '/sounds/meow6.mp3',
-  reponame + '/sounds/meow7.mp3',
-  reponame + '/sounds/meow8.mp3',
-  reponame + '/sounds/meow2.mp3',
-  reponame + '/sounds/meow4.mp3',
-  reponame + '/sounds/meow5.mp3',
-  reponame + '/sounds/meow6.mp3',
-  reponame + '/sounds/meow7.mp3',
-  reponame + '/sounds/meow8.mp3',
-]
-
-function playSound(soundFile, playbackRate = 1, onStart) {
-  const audio = new Audio(soundFile)
-  audio.playbackRate = playbackRate
-  audio.muted = soundMuted
-  activeSounds.add(audio)
-
-  return new Promise((resolve, reject) => {
-    audio.addEventListener('playing', () => onStart?.(audio), { once: true })
-    audio.addEventListener('ended', () => {
-      activeSounds.delete(audio)
-      resolve()
-    }, { once: true })
-    audio.addEventListener('error', () => {
-      activeSounds.delete(audio)
-      reject(new Error(`Could not load ${soundFile}`))
-    }, { once: true })
-
-    audio.play().catch(error => {
-      activeSounds.delete(audio)
-      reject(error)
-    })
-  })
-}
-
-async function playMeows(count, onSoundStart) {
-  if (!Number.isSafeInteger(count) || count < 0) {
-    throw new Error('Enter a non-negative whole number.')
-  }
-
-  let previousIndex = -1
-
-  for (let i = 0; i < count; i++) {
-    let index = Math.floor(Math.random() * meowFiles.length)
-
-    // Avoid an identical sound back-to-back when there is more than one choice.
-    while (meowFiles.length > 1 && index === previousIndex) {
-      index = Math.floor(Math.random() * meowFiles.length)
-    }
-    previousIndex = index
-
-    await playSound(meowFiles[index], 0.96 + Math.random() * 0.08, onSoundStart)
-  }
-}
-
-function overlay(text, className, role = 'status', duration = 3000) {
-  let element = document.createElement('div')
-  element.className = className
-  element.setAttribute('role', role)
-  element.textContent = text
-  element.style.setProperty('--overlay-duration', `${duration}ms`)
-  document.body.appendChild(element)
-
-  let timeoutId
-  const stop = () => {
-    if (!element) return
-    window.clearTimeout(timeoutId)
-    element.remove()
-    element = null
-  }
-  timeoutId = window.setTimeout(stop, duration)
-
-  return stop
-}
-
-let disapprovalOverlay
-function disapprove() {
-  playSound(reponame + '/sounds/disapproval.mp3').catch(console.error)
-  disapprovalOverlay?.()
-  disapprovalOverlay = overlay('disapproved', 'disapproval-overlay', 'alert', 6000)
-}
-
-function replaceParticleText(text) {
-  for (const particle of particles) {
-    particle.oldText = particle.text
-    particle.text = text
-    particle.material.map = getParticleTexture(text, particle.color)
-    particle.material.needsUpdate = true
-  }
-}
-
-function revertParticleText() {
-  for (const particle of particles) {
-    particle.text = particle.oldText
-    particle.material.map = getParticleTexture(particle.text, particle.color)
-    particle.material.needsUpdate = true
-  }
-}
-
-window.addEventListener('soundmute', () => {
-  replaceParticleText('?')
-})
-
-window.addEventListener('soundunmute', () => {
-  revertParticleText()
-})
-
-
-function execute() {
-  let cost = getCost()
-  if(cost > 0) {
-      playMeows(cost, spawnMeowParticle).catch(console.error)
-  } else {
-      disapprove()
-  }
-}
-
 updatePrice()
 
-const loadedObjects = new Map()
+function execute() {
+  const cost = getCost()
+  if (cost > 0) {
+    effects.playMeows(cost, effects.spawnMeowParticle).catch(console.error)
+  } else {
+    effects.disapprove()
+  }
+}
+
+// Model controls and selection state
 const groups = new Map()
 const standaloneItems = []
 
@@ -435,7 +126,7 @@ models.forEach((item, index) => {
   }
 })
 
-function getLabel(item) {
+function getModelName(item) {
   return item.label ??
     item.path.split('/').pop().replace(/\.(glb|gltf)$/i, '')
 }
@@ -477,7 +168,7 @@ function clearGroup(groupName) {
       if (radio.name === radioName) radio.checked = false
     })
 
-  // Hide every object belonging to the group.<
+  // Hide every object belonging to the group.
   for (const entry of groups.get(groupName) ?? []) {
     const object = loadedObjects.get(entry.index)
     if (object) object.visible = false
@@ -546,7 +237,7 @@ function createControl(entry, type, section, radioName) {
   }
 
   const text = document.createElement('span')
-  text.textContent = getLabel(item)
+  text.textContent = getModelName(item)
 
   label.append(input, text)
   section.appendChild(label)
@@ -615,7 +306,7 @@ if (standaloneItems.length) {
   )
 }
 
-// Load all models.
+// Model loading
 const loader = new GLTFLoader()
 
 models.forEach((item, index) => {
@@ -625,7 +316,9 @@ models.forEach((item, index) => {
     object.position.set(...(item.position ?? [0, 0, 0]))
     object.rotation.set(...(item.rotation ?? [0, 0, 0]))
 
-    const scale = Array.isArray(item.scale) ? item.scale : ([item.scale, item.scale, item.scale] ?? [1, 1, 1])
+    const scale = Array.isArray(item.scale)
+      ? item.scale
+      : [item.scale ?? 1, item.scale ?? 1, item.scale ?? 1]
     object.scale.set(scale[0], scale[1], scale[2])
     
     object.visible = item.visible === true
@@ -666,7 +359,7 @@ const clock = new THREE.Clock()
 function animate() {
   requestAnimationFrame(animate)
   camControls.update()
-  updateParticles(clock.getDelta())
+  effects.updateParticles(clock.getDelta())
 
   headLight.position.copy(camera.position)
   renderer.render(scene, camera)

@@ -63,10 +63,6 @@ body {
     }
 }
 
-.lil-gui {
-    display: none !important;
-}
-
 #model-gui {
     position: fixed;
     top: 64px;
