@@ -104,14 +104,40 @@ function updatePrice() {
 
 updatePrice()
 
+let isPlayingMeows = false
+
+function playMeows(cost) {
+  if (isPlayingMeows) return
+
+  isPlayingMeows = true
+  effects.playMeows(cost, effects.spawnMeowParticle)
+    .catch(console.error)
+    .finally(() => {
+      isPlayingMeows = false
+      console.log("finally")
+    })
+}
+
 function execute() {
   const cost = getCost()
   if (cost > 0) {
-    effects.playMeows(cost, effects.spawnMeowParticle).catch(console.error)
+    playMeows(cost)
   } else {
     effects.disapprove()
   }
 }
+
+function scheduleRandomMeows() {
+  const delay = 15_000 + Math.random() * 20_000
+  setTimeout(() => {
+    if (!isPlayingMeows) {
+      playMeows(1)
+    }
+    scheduleRandomMeows()
+  }, delay)
+}
+
+scheduleRandomMeows()
 
 // Model controls and selection state
 const groups = new Map()
