@@ -17,6 +17,9 @@
     --color-alert: #d00000;
     --color-surface: rgb(244, 220, 206);
     --color-text: #191919;
+    --color-scrollbar-thumb: rgb(25 25 25 / 35%);
+    --color-scrollbar-thumb-hover: rgb(25 25 25 / 60%);
+    --scrollbar-width: 0.375rem;
 
     --space-1: 0.1875rem;
     --space-2: 0.25rem;
@@ -127,11 +130,30 @@ body {
     max-height: calc(100vh - var(--gui-height-offset));
     max-height: calc(100dvh - var(--gui-height-offset));
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-scrollbar-thumb) transparent;
     padding: var(--gui-padding);
     background: var(--color-surface);
     color: var(--color-text);
     border-radius: var(--radius-medium);
     z-index: 1000;
+}
+
+#model-gui::-webkit-scrollbar {
+    width: var(--scrollbar-width);
+}
+
+#model-gui::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#model-gui::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--color-scrollbar-thumb);
+}
+
+#model-gui::-webkit-scrollbar-thumb:hover {
+    background: var(--color-scrollbar-thumb-hover);
 }
 
 #model-gui[hidden] {
