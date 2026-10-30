@@ -176,7 +176,6 @@ function updatePrice() {
 }
 
 const particleColors = ['#F6A6C8', '#B8A7F2', '#A8DADC', '#FFD6A5']
-const particleDelay = 1
 const particleTextures = new Map()
 const particles = []
 
@@ -258,12 +257,8 @@ function getCatOrigin() {
   return origin
 }
 
-function spawnMeowParticles(count) {
-  origin = getCatOrigin()
-
-  for (let i = 0; i < count; i++) {
-    createParticle(origin, 'meow', particleDelay * i)
-  }
+function spawnMeowParticle() {
+  createParticle(getCatOrigin(), 'meow')
 }
 
 function updateParticles(deltaTime) {
@@ -313,13 +308,14 @@ const meowFiles = [
   reponame + '/sounds/meow8.mp3',
 ]
 
-function playSound(soundFile, playbackRate = 1) {
+function playSound(soundFile, playbackRate = 1, onStart) {
   const audio = new Audio(soundFile)
   audio.playbackRate = playbackRate
   audio.muted = soundMuted
   activeSounds.add(audio)
 
   return new Promise((resolve, reject) => {
+    audio.addEventListener('playing', () => onStart?.(audio), { once: true })
     audio.addEventListener('ended', () => {
       activeSounds.delete(audio)
       resolve()
@@ -336,7 +332,7 @@ function playSound(soundFile, playbackRate = 1) {
   })
 }
 
-async function playMeows(count) {
+async function playMeows(count, onSoundStart) {
   if (!Number.isSafeInteger(count) || count < 0) {
     throw new Error('Enter a non-negative whole number.')
   }
@@ -352,7 +348,7 @@ async function playMeows(count) {
     }
     previousIndex = index
 
-    await playSound(meowFiles[index], 0.96 + Math.random() * 0.08)
+    await playSound(meowFiles[index], 0.96 + Math.random() * 0.08, onSoundStart)
   }
 }
 
@@ -412,8 +408,7 @@ window.addEventListener('soundunmute', () => {
 function execute() {
   let cost = getCost()
   if(cost > 0) {
-      spawnMeowParticles(cost)
-      playMeows(cost).catch(console.error)
+      playMeows(cost, spawnMeowParticle).catch(console.error)
   } else {
       disapprove()
   }
