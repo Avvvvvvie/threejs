@@ -241,7 +241,11 @@ export function createEffects(scene, getCat, getSpinModels) {
   }
 
   function pat() {
-    if (patting) spawnMeowParticle()
+    if (patting) {
+      playMeows(1, () => {
+        spawnMeowParticle()
+      }).catch(console.error)
+    }
   }
 
   function updatePattingParticles(deltaTime) {
