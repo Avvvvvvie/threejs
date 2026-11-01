@@ -58,7 +58,24 @@ guiToggle.addEventListener('click', () => {
 })
 document.body.appendChild(guiToggle)
 
-const effects = createEffects(scene, () => loadedObjects.get(0))
+const effects = createEffects(
+  scene,
+  () => loadedObjects.get(0),
+  () => models
+    .map((item, index) => item.spin ? loadedObjects.get(index) : undefined)
+    .filter(object => object !== undefined)
+)
+
+const spinButton = document.createElement('button')
+spinButton.id = 'spin-toggle'
+spinButton.type = 'button'
+spinButton.setAttribute('aria-label', 'OIIAI')
+spinButton.title = 'OIIAI'
+spinButton.textContent = 'OIIAI'
+spinButton.addEventListener('click', () => {
+  effects.spin().catch(console.error)
+})
+document.body.appendChild(spinButton)
 
 const compactViewport = window.matchMedia('(max-width: 700px), (max-height: 500px)')
 guiContainer.hidden = compactViewport.matches
@@ -498,7 +515,9 @@ const clock = new THREE.Clock()
 function animate() {
   requestAnimationFrame(animate)
   camControls.update()
-  effects.updateParticles(clock.getDelta())
+  const deltaTime = clock.getDelta()
+  effects.updateParticles(deltaTime)
+  effects.updateSpin(deltaTime)
 
   headLight.position.copy(camera.position)
   renderer.render(scene, camera)

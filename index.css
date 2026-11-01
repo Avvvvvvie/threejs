@@ -178,12 +178,27 @@ body {
     top: var(--toggle-top);
     left: var(--space-7);
     z-index: 1001;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
     width: var(--sound-button-width);
     height: var(--sound-button-height);
     padding: var(--space-3);
+    border: var(--border-width) solid var(--color-text);
+    border-radius: var(--radius-medium);
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+#spin-toggle {
+    position: fixed;
+    top: var(--toggle-top);
+    left: calc(var(--space-7) + var(--sound-button-width) + var(--space-4));
+    z-index: 1001;
+    height: var(--sound-button-height);
+    padding: var(--space-4) var(--space-5);
     border: var(--border-width) solid var(--color-text);
     border-radius: var(--radius-medium);
     background: var(--color-surface);
@@ -341,6 +356,10 @@ body {
 
     #sound-toggle {
         left: var(--space-5);
+    }
+
+    #spin-toggle {
+        left: calc(var(--space-5) + var(--sound-button-width) + var(--space-4));
     }
 
     #model-price-bar {

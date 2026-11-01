@@ -1,9 +1,11 @@
 import * as THREE from 'three'
 import { assetBasePath } from './models.js'
 
-export function createEffects(scene, getCat) {
+export function createEffects(scene, getCat, getSpinModels) {
   let soundMuted = false
   const activeSounds = new Set()
+  let spinAnimation
+  let isSpinPending = false
   const soundToggle = document.createElement('button')
   soundToggle.id = 'sound-toggle'
   soundToggle.type = 'button'
@@ -242,6 +244,70 @@ export function createEffects(scene, getCat) {
     })
   }
 
+  function startSpin(cat, speedRadiansPerSecond, durationSeconds) {
+    const spinModels = [...new Set([...getSpinModels(), cat])]
+    const bodyCenter = new THREE.Box3()
+      .setFromObject(cat)
+      .getCenter(new THREE.Vector3())
+    // The tail shifts the full bounds backward, so use the cat origin for body depth.
+    bodyCenter.z = cat.getWorldPosition(new THREE.Vector3()).z
+    const pivot = new THREE.Group()
+    pivot.position.copy(bodyCenter)
+    scene.add(pivot)
+    spinModels.forEach(model => pivot.attach(model))
+
+    spinAnimation = {
+      pivot,
+      models: spinModels,
+      speedRadiansPerSecond,
+      durationSeconds,
+      elapsed: 0
+    }
+  }
+
+  function spin(speedRadiansPerSecond = Math.PI * 10, durationSeconds = 1.8) {
+    const rotationDuration = 2 * Math.PI / Math.abs(speedRadiansPerSecond)
+    durationSeconds = Math.ceil(durationSeconds / rotationDuration) * rotationDuration
+
+    if (!Number.isFinite(speedRadiansPerSecond) || speedRadiansPerSecond === 0) {
+      return Promise.reject(new RangeError('Spin speed must be a non-zero number.'))
+    }
+    if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+      return Promise.reject(new RangeError('Spin duration must be a positive number.'))
+    }
+    if (isSpinPending || spinAnimation) return Promise.resolve()
+
+    const cat = getCat()
+    if (!cat) {
+      return Promise.reject(new Error('Cannot spin models before the cat has loaded.'))
+    }
+
+    isSpinPending = true
+    return playSound(assetBasePath + '/sounds/spin.mp3', 1, () => {
+      startSpin(cat, speedRadiansPerSecond, durationSeconds)
+    }).finally(() => {
+      isSpinPending = false
+    })
+  }
+
+  function updateSpin(deltaTime) {
+    if (!spinAnimation) return
+
+    spinAnimation.elapsed = Math.min(
+      spinAnimation.elapsed + deltaTime,
+      spinAnimation.durationSeconds
+    )
+    spinAnimation.pivot.rotation.y =
+      spinAnimation.speedRadiansPerSecond * spinAnimation.elapsed
+
+    if (spinAnimation.elapsed === spinAnimation.durationSeconds) {
+      const { pivot, models: spinModels } = spinAnimation
+      spinModels.forEach(model => scene.attach(model))
+      scene.remove(pivot)
+      spinAnimation = undefined
+    }
+  }
+
   async function playMeows(count, onSoundStart) {
     if (!Number.isSafeInteger(count) || count < 0) {
       throw new Error('Enter a non-negative whole number.')
@@ -318,6 +384,8 @@ export function createEffects(scene, getCat) {
     disapprove,
     playMeows,
     spawnMeowParticle,
-    updateParticles
+    updateParticles,
+    spin,
+    updateSpin
   }
 }

@@ -5,6 +5,7 @@ Site: https://avvvvvvie.github.io/threejs/
 ### Features
 
 - Meowing
+- Spinning
 - Disapproving bad choices
 - Sound muting (generous feature for some weird humans)
 - Coloring ugly items
