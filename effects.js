@@ -3,6 +3,7 @@ import { assetBasePath } from './models.js'
 
 export function createEffects(scene, getCat, getSpinModels) {
   let soundMuted = false
+  const yippeeVolume = 10 ** (-28 / 20)
   const activeSounds = new Set()
   let spinAnimation
   let isSpinPending = false
@@ -394,9 +395,10 @@ export function createEffects(scene, getCat, getSpinModels) {
     assetBasePath + '/sounds/meow8.mp3',
   ]
 
-  function playSound(soundFile, playbackRate = 1, onStart) {
+  function playSound(soundFile, playbackRate = 1, onStart, volume = 1) {
     const audio = new Audio(soundFile)
     audio.playbackRate = playbackRate
+    audio.volume = volume
     audio.muted = soundMuted
     activeSounds.add(audio)
 
@@ -497,7 +499,7 @@ export function createEffects(scene, getCat, getSpinModels) {
   }
 
   function yippee() {
-    return playSound(assetBasePath + '/sounds/yippee.mp3', 1, confetti)
+    return playSound(assetBasePath + '/sounds/yippee.mp3', 1, confetti, yippeeVolume)
   }
 
   function updateSpin(deltaTime) {
