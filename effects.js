@@ -6,6 +6,7 @@ export function createEffects(scene, getCat, getSpinModels) {
   const activeSounds = new Set()
   let spinAnimation
   let isSpinPending = false
+  let patting = false
   const soundToggle = document.createElement('button')
   soundToggle.id = 'sound-toggle'
   soundToggle.type = 'button'
@@ -50,8 +51,27 @@ export function createEffects(scene, getCat, getSpinModels) {
   updateSoundToggle()
 
   const particleColors = ['#F6A6C8', '#B8A7F2', '#A8DADC', '#FFD6A5']
+  const confettiColors = ['#F94144', '#F9C74F', '#90BE6D', '#43AA8B', '#577590', '#C77DFF']
   const particleTextures = new Map()
+  const ringTextures = new Map()
   const particles = []
+  const pattingRingOptions = {
+    particlesPerSecond: 8,
+    rateVariation: 3,
+    size: 0.75,
+    lifetime: 1,
+    drift: 10
+  }
+  let pattingContact
+  let pattingParticleElapsed = 0
+  let nextPattingParticleDelay = getPattingParticleDelay()
+
+  function getPattingParticleDelay() {
+    const rate = pattingRingOptions.particlesPerSecond +
+      (Math.random() * 2 - 1) * pattingRingOptions.rateVariation
+    const delay = 1 / Math.max(rate, Number.EPSILON)
+    return delay
+  }
 
   function getParticleTexture(text, color) {
     const key = JSON.stringify([text, color])
@@ -80,6 +100,64 @@ export function createEffects(scene, getCat, getSpinModels) {
     }
 
     return particleTextures.get(key)
+  }
+
+  function getRingTexture(color) {
+    if (!ringTextures.has(color)) {
+      const canvas = document.createElement('canvas')
+      canvas.width = 64
+      canvas.height = 64
+
+      const context = canvas.getContext('2d')
+      if (!context) {
+        throw new Error('Could not create the ring particle texture.')
+      }
+
+      context.beginPath()
+      context.arc(32, 32, 23, 0, Math.PI * 2)
+      context.lineWidth = 10
+      context.strokeStyle = color
+      context.stroke()
+
+      const texture = new THREE.CanvasTexture(canvas)
+      texture.colorSpace = THREE.SRGBColorSpace
+      ringTextures.set(color, texture)
+    }
+
+    return ringTextures.get(color)
+  }
+
+  function spawnRingParticle(origin, {
+    size = pattingRingOptions.size,
+    lifetime = pattingRingOptions.lifetime,
+    drift = pattingRingOptions.drift
+  } = {}) {
+    const color = particleColors[
+      Math.floor(Math.random() * particleColors.length)
+    ]
+    const material = new THREE.SpriteMaterial({
+      map: getRingTexture(color),
+      transparent: true,
+      depthTest: false,
+      depthWrite: false
+    })
+    const sprite = new THREE.Sprite(material)
+    sprite.position.copy(origin)
+    sprite.scale.set(size, size, 1)
+
+    particles.push({
+      sprite,
+      material,
+      isPattingRing: true,
+      velocity: new THREE.Vector3(),
+      targetVelocity: new THREE.Vector3(),
+      directionChangeTime: 0,
+      delay: 0,
+      elapsed: 0,
+      spawned: false,
+      lifetime,
+      drift
+    })
   }
 
   function createParticle(origin, text) {
@@ -141,7 +219,106 @@ export function createEffects(scene, getCat, getSpinModels) {
     createParticle(getCatOrigin(), 'meow')
   }
 
+  function setPatting(value) {
+    patting = value
+    if (!patting) setPattingContact()
+  }
+
+  function setPattingContact(position) {
+    const enteringContact = !pattingContact && position
+    pattingContact = position?.clone()
+    if (!pattingContact) {
+      pattingParticleElapsed = 0
+      return
+    }
+
+    if (patting && enteringContact) {
+      spawnRingParticle(pattingContact)
+      pattingParticleElapsed = 0
+      nextPattingParticleDelay = getPattingParticleDelay()
+    }
+  }
+
+  function pat() {
+    if (patting) spawnMeowParticle()
+  }
+
+  function updatePattingParticles(deltaTime) {
+    if (!patting || !pattingContact) {
+      pattingParticleElapsed = 0
+      return
+    }
+
+    pattingParticleElapsed += deltaTime
+    while (pattingParticleElapsed >= nextPattingParticleDelay) {
+      pattingParticleElapsed -= nextPattingParticleDelay
+      spawnRingParticle(pattingContact)
+      nextPattingParticleDelay = getPattingParticleDelay()
+    }
+  }
+
+  function confetti() {
+    const cat = getCat()
+    if (!cat) return
+
+    const start = getCatOrigin()
+    start.y = 0
+    const confettiCount = 96
+    const launchDuration = 1.5
+
+    for (let i = 0; i < confettiCount; i++) {
+      const rise = 18 + Math.random() * 8
+      const spread = Math.sqrt(Math.random()) * Math.tan(Math.PI / 6) * rise
+      const direction = Math.random() * Math.PI * 2
+      const geometry = new THREE.PlaneGeometry(
+        0.18 + Math.random() * 0.2,
+        0.28 + Math.random() * 0.22
+      )
+      const material = new THREE.MeshBasicMaterial({
+        color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+        side: THREE.DoubleSide,
+        transparent: true,
+        depthWrite: false
+      })
+      const sprite = new THREE.Mesh(geometry, material)
+      const startX = start.x
+      const startY = start.y
+      sprite.position.copy(start)
+      sprite.rotation.set(
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+        Math.random() * Math.PI
+      )
+
+      particles.push({
+        sprite,
+        material,
+        geometry,
+        startZ: start.z,
+        startX,
+        startY,
+        spreadX: Math.cos(direction) * spread,
+        spreadZ: Math.sin(direction) * spread,
+        delay: i / confettiCount * launchDuration,
+        elapsed: 0,
+        spawned: false,
+        lifetime: 2.4 + Math.random() * 1.2,
+        rise,
+        swayAmount: 0,
+        swayFrequency: 2 + Math.random() * 2,
+        swayPhase: Math.random() * Math.PI * 2,
+        rotationSpeed: new THREE.Vector3(
+          (Math.random() - 0.5) * 10,
+          (Math.random() - 0.5) * 10,
+          (Math.random() - 0.5) * 10
+        )
+      })
+    }
+  }
+
   function updateParticles(deltaTime) {
+    updatePattingParticles(deltaTime)
+
     for (let i = particles.length - 1; i >= 0; i--) {
       const particle = particles[i]
       particle.elapsed += deltaTime
@@ -154,20 +331,49 @@ export function createEffects(scene, getCat, getSpinModels) {
 
       const age = particle.elapsed - particle.delay
       const progress = Math.min(age / particle.lifetime, 1)
-      const sway = Math.sin(
-        age * particle.swayFrequency + particle.swayPhase
-      ) * particle.swayAmount + Math.sin(
-        age * particle.swayFrequency * 2.1 + particle.swayPhase
-      ) * particle.swayAmount * 0.2
+      if (particle.isPattingRing) {
+        particle.directionChangeTime -= deltaTime
+        if (particle.directionChangeTime <= 0) {
+          particle.targetVelocity.set(
+            (Math.random() - 0.5) * particle.drift,
+            (Math.random() - 0.5) * particle.drift,
+            (Math.random() - 0.5) * particle.drift
+          )
+          particle.directionChangeTime = 0.12 + Math.random() * 0.35
+        }
+        particle.velocity.lerp(
+          particle.targetVelocity,
+          1 - Math.exp(-5 * deltaTime)
+        )
+        particle.sprite.position.addScaledVector(particle.velocity, deltaTime)
+        particle.material.opacity = 1 - progress
+      } else {
+        const sway = Math.sin(
+          age * particle.swayFrequency + particle.swayPhase
+        ) * particle.swayAmount + Math.sin(
+          age * particle.swayFrequency * 2.1 + particle.swayPhase
+        ) * particle.swayAmount * 0.2
 
-      particle.sprite.position.x = particle.startX + sway
-      particle.sprite.position.y = particle.startY + particle.rise * progress
-      particle.material.opacity = 1 - THREE.MathUtils.smoothstep(progress, 0.45, 1)
+        particle.sprite.position.x =
+          particle.startX + (particle.spreadX ?? 0) * progress + sway
+        particle.sprite.position.y = particle.startY + particle.rise * progress
+        if (particle.spreadZ !== undefined) {
+          particle.sprite.position.z =
+            particle.startZ + particle.spreadZ * progress
+        }
+        if (particle.rotationSpeed) {
+          particle.sprite.rotation.x += particle.rotationSpeed.x * deltaTime
+          particle.sprite.rotation.y += particle.rotationSpeed.y * deltaTime
+          particle.sprite.rotation.z += particle.rotationSpeed.z * deltaTime
+        }
+        particle.material.opacity = 1 - THREE.MathUtils.smoothstep(progress, 0.45, 1)
+      }
 
       if (progress === 1) {
         scene.remove(particle.sprite)
-        particle.material.dispose()
+        particle.geometry?.dispose()
         particles.splice(i, 1)
+        particle.material.dispose()
       }
     }
   }
@@ -290,6 +496,10 @@ export function createEffects(scene, getCat, getSpinModels) {
     })
   }
 
+  function yippee() {
+    return playSound(assetBasePath + '/sounds/yippee.mp3', 1, confetti)
+  }
+
   function updateSpin(deltaTime) {
     if (!spinAnimation) return
 
@@ -357,6 +567,7 @@ export function createEffects(scene, getCat, getSpinModels) {
 
   function replaceParticleText(text) {
     for (const particle of particles) {
+      if(!particle.text) continue
       particle.oldText = particle.text
       particle.text = text
       particle.material.map = getParticleTexture(text, particle.color)
@@ -366,6 +577,7 @@ export function createEffects(scene, getCat, getSpinModels) {
 
   function revertParticleText() {
     for (const particle of particles) {
+      if(!particle.text) continue
       particle.text = particle.oldText
       particle.material.map = getParticleTexture(particle.text, particle.color)
       particle.material.needsUpdate = true
@@ -384,8 +596,13 @@ export function createEffects(scene, getCat, getSpinModels) {
     disapprove,
     playMeows,
     spawnMeowParticle,
+    setPatting,
+    setPattingContact,
+    pat,
+    spawnRingParticle,
     updateParticles,
     spin,
+    yippee,
     updateSpin
   }
 }

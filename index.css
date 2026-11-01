@@ -47,6 +47,8 @@
     --toggle-top-mobile: 0.75rem;
     --sound-button-width: 2.5rem;
     --sound-button-height: 2.375rem;
+    --spin-button-width: 4.75rem;
+    --yippee-button-width: 5.25rem;
     --sound-icon-size: 1.5rem;
     --price-bar-bottom: 1rem;
     --price-bar-bottom-mobile: 0.75rem;
@@ -57,6 +59,16 @@
 body {
     margin: 0;
     overflow: hidden;
+}
+
+html.patting,
+html.patting * {
+    cursor: grab !important;
+}
+
+html.patting.pat-pressed,
+html.patting.pat-pressed * {
+    cursor: grabbing !important;
 }
 
 * {
@@ -195,8 +207,51 @@ body {
 #spin-toggle {
     position: fixed;
     top: var(--toggle-top);
+    left: calc(var(--space-7) + var(--sound-button-width) + var(--space-4) + var(--sound-button-width) + var(--space-4));
+    z-index: 1001;
+    box-sizing: border-box;
+    width: var(--spin-button-width);
+    height: var(--sound-button-height);
+    padding: var(--space-4) var(--space-5);
+    border: var(--border-width) solid var(--color-text);
+    border-radius: var(--radius-medium);
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+#pat-toggle {
+    position: fixed;
+    top: var(--toggle-top);
     left: calc(var(--space-7) + var(--sound-button-width) + var(--space-4));
     z-index: 1001;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--sound-button-width);
+    height: var(--sound-button-height);
+    padding: var(--space-3);
+    border: var(--border-width) solid var(--color-text);
+    border-radius: var(--radius-medium);
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+#pat-toggle > svg {
+    width: var(--sound-icon-size);
+    height: var(--sound-icon-size);
+    overflow: visible;
+}
+
+#yippee-toggle {
+    position: fixed;
+    top: var(--toggle-top);
+    left: calc(var(--space-7) + var(--sound-button-width) + var(--space-4) + var(--sound-button-width) + var(--space-4) + var(--spin-button-width) + var(--space-4));
+    z-index: 1001;
+    box-sizing: border-box;
+    width: var(--yippee-button-width);
     height: var(--sound-button-height);
     padding: var(--space-4) var(--space-5);
     border: var(--border-width) solid var(--color-text);
@@ -359,7 +414,11 @@ body {
     }
 
     #spin-toggle {
-        left: calc(var(--space-5) + var(--sound-button-width) + var(--space-4));
+        left: calc(var(--space-5) + var(--sound-button-width) + var(--space-4) + var(--sound-button-width) + var(--space-4));
+    }
+
+    #yippee-toggle {
+        left: calc(var(--space-5) + var(--sound-button-width) + var(--space-4) + var(--sound-button-width) + var(--space-4) + var(--spin-button-width) + var(--space-4));
     }
 
     #model-price-bar {
